@@ -1,5 +1,7 @@
 # PixelDrain RateLimit Bypasser 🚀
 
+![Project Preview](/screenshot.png)
+
 ## 🤔 The Problem
 
 PixelDrain limits you to 6GB downloads per day. Seriously? In 2025?
