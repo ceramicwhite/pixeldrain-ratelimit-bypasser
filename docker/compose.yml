@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  pixeldrain-frontend:
+    build: .
+    container_name: pixeldrain-frontend
+    environment:
+      - CLOUDFLARE_DOMAIN=${CLOUDFLARE_DOMAIN:-your-domain.workers.dev}
+      - PORT=3000
+    networks:
+      - pixeldrain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pixeldrain.rule=Host(`${FRONTEND_DOMAIN:-pixel.localhost}`)"
+      - "traefik.http.services.pixeldrain.loadbalancer.server.port=3000"
+      - "traefik.docker.network=pixeldrain-network"
+
+  nginx:
+    image: nginx:alpine
+    container_name: pixeldrain-nginx
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - pixeldrain-frontend
+    networks:
+      - pixeldrain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  pixeldrain-network:
+    driver: bridge
